@@ -37,16 +37,24 @@ async function poll() {
       return
     }
     for (const alert of data) {
-      console.log('[DEBUG]', JSON.stringify(alert))
-      const city      = alert.city || alert.name || alert.value || ''
-      const alertId   = `${city}-${alert.threat || 'alert'}`
-      const countdown = alert.countdown || 90
-      const threat    = alert.threat || 'missiles'
-      if (lastAlertIds.has(alertId)) continue
-      lastAlertIds.add(alertId)
-      console.log(`[ALERT] ${city} | ${threat} | ${countdown}s`)
-      await dispatch(city, threat, countdown)
-    }
+  const alertId   = alert.notificationId || ''
+  const cities    = alert.cities || []
+  const threat    = String(alert.threat || 'missiles')
+  const countdown = alert.countdown || 90
+  const isDrill   = alert.isDrill || false
+
+  if (isDrill) continue
+  if (lastAlertIds.has(alertId)) continue
+  lastAlertIds.add(alertId)
+
+  console.log(`[ALERT] cities: ${cities.join(', ')} | threat: ${threat}`)
+
+  // שלח התראה לכל עיר
+  for (const city of cities) {
+    await dispatch(city, threat, countdown)
+  }
+}
+    
   } catch (e) {
     if (e.code !== 'ECONNABORTED') console.warn('[POLL]', e.message)
   }
