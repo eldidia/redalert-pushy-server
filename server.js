@@ -37,6 +37,7 @@ async function poll() {
       return
     }
     for (const alert of data) {
+      console.log('[DEBUG]', JSON.stringify(alert))
       const city      = alert.city || alert.name || alert.value || ''
       const alertId   = `${city}-${alert.threat || 'alert'}`
       const countdown = alert.countdown || 90
