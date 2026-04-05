@@ -10,6 +10,8 @@ app.use(express.json())
 
 const devices = new Map()
 let lastAlertIds = new Set()
+// מאגר ישובים מצטבר מהתראות אמיתיות
+const knownCities = new Set()
 
 app.post('/register', (req, res) => {
   const { token, cities } = req.body
