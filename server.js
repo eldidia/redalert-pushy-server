@@ -1,5 +1,6 @@
 import express from 'express'
 import axios   from 'axios'
+import pikudHaoref from 'pikud-haoref-api'
 
 const app  = express()
 const PORT = process.env.PORT || 3000
@@ -29,39 +30,25 @@ app.post('/update-cities', (req, res) => {
 let citiesCache = []
 let citiesCacheTime = 0
 
-app.get('/cities', async (req, res) => {
+app.get('/cities', (req, res) => {
   try {
-    // cache ל-24 שעות
-    if (citiesCache.length > 0 && Date.now() - citiesCacheTime < 86400000) {
-      return res.json(citiesCache)
-    }
-    const { data } = await axios.get('https://api.tzevaadom.co.il/cities', { timeout: 5000 })
-    if (Array.isArray(data) && data.length > 0) {
-      citiesCache = data.map(c => c.name || c.value || c).filter(Boolean)
-      citiesCacheTime = Date.now()
-    }
-    res.json(citiesCache)
+    // הרשימה המלאה מובנית בתוך החבילה
+    const cities = Object.keys(pikudHaoref.getCities())
+    res.json(cities.sort())
   } catch (e) {
-    // אם נכשל – החזר רשימה ריקה
-    res.json(citiesCache)
+    res.json([])
   }
 })
 
-app.get('/cities/version', async (req, res) => {
+app.get('/cities/version', (req, res) => {
   try {
-    if (citiesCache.length === 0) {
-      const { data } = await axios.get('https://api.tzevaadom.co.il/cities', { timeout: 5000 })
-      if (Array.isArray(data) && data.length > 0) {
-        citiesCache = data.map(c => c.name || c.value || c).filter(Boolean)
-        citiesCacheTime = Date.now()
-      }
-    }
-    res.json({ count: citiesCache.length })
+    const count = Object.keys(pikudHaoref.getCities()).length
+    res.json({ count })
   } catch (e) {
-    res.json({ count: citiesCache.length })
+    res.json({ count: 0 })
   }
 })
-
+  
 app.get('/health', (req, res) => {
   res.json({ ok: true, devices: devices.size, uptime: process.uptime() })
 })
