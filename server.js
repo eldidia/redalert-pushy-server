@@ -25,6 +25,43 @@ app.post('/update-cities', (req, res) => {
   res.json({ ok: true })
 })
 
+// cache ישובים
+let citiesCache = []
+let citiesCacheTime = 0
+
+app.get('/cities', async (req, res) => {
+  try {
+    // cache ל-24 שעות
+    if (citiesCache.length > 0 && Date.now() - citiesCacheTime < 86400000) {
+      return res.json(citiesCache)
+    }
+    const { data } = await axios.get('https://api.tzevaadom.co.il/cities', { timeout: 5000 })
+    if (Array.isArray(data) && data.length > 0) {
+      citiesCache = data.map(c => c.name || c.value || c).filter(Boolean)
+      citiesCacheTime = Date.now()
+    }
+    res.json(citiesCache)
+  } catch (e) {
+    // אם נכשל – החזר רשימה ריקה
+    res.json(citiesCache)
+  }
+})
+
+app.get('/cities/version', async (req, res) => {
+  try {
+    if (citiesCache.length === 0) {
+      const { data } = await axios.get('https://api.tzevaadom.co.il/cities', { timeout: 5000 })
+      if (Array.isArray(data) && data.length > 0) {
+        citiesCache = data.map(c => c.name || c.value || c).filter(Boolean)
+        citiesCacheTime = Date.now()
+      }
+    }
+    res.json({ count: citiesCache.length })
+  } catch (e) {
+    res.json({ count: citiesCache.length })
+  }
+})
+
 app.get('/health', (req, res) => {
   res.json({ ok: true, devices: devices.size, uptime: process.uptime() })
 })
